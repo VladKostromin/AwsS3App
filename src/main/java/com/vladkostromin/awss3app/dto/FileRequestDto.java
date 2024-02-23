@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class AuthRequestDto {
-    private String username;
-    private String password;
+public class FileRequestDto {
+    private String fileName;
+    private String location;
 }
