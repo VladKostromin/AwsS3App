@@ -14,8 +14,8 @@ spring:
   cloud:
     aws:
       credentials:
-        access-key: AKIAVRUVRQESBKFN5B6Y
-        secret-key: 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
+        access-key: ***************
+        secret-key: ***************
 s3:
   bucket:
     name: com.vladkostromin.s3app.bucket
