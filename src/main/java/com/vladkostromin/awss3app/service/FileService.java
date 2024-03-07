@@ -1,5 +1,6 @@
 package com.vladkostromin.awss3app.service;
 
+import com.amazonaws.services.s3.internal.FileDeletionEvent;
 import com.vladkostromin.awss3app.entity.EventEntity;
 import com.vladkostromin.awss3app.entity.FileEntity;
 import com.vladkostromin.awss3app.enums.EventStatus;
@@ -15,6 +16,7 @@ import reactor.core.publisher.Mono;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
@@ -33,7 +35,7 @@ public class FileService {
     private final S3AsyncClient s3AsyncClient;
 
     private final FileRepository fileRepository;
-    private final EventRepository eventRepository;
+    private final EventService eventService;
 
     @Value("${s3.bucket.name}")
     private String bucketName;
@@ -56,7 +58,7 @@ public class FileService {
                             savedFile.setUpdatedAt(LocalDateTime.now());
                             log.info("File was saved in database - {}", savedFile);
                         }))
-                .flatMap(savedFile -> eventRepository.save(EventEntity.builder()
+                .flatMap(savedFile -> eventService.saveEntity(EventEntity.builder()
                                 .createdAt(LocalDateTime.now())
                                 .updatedAt(LocalDateTime.now())
                                 .status(EventStatus.UPLOADED)
@@ -68,7 +70,7 @@ public class FileService {
                 .doOnSuccess(f -> log.info("File uploaded - {}", f));
     }
 
-    public Mono<FileEntity> downloadFile(FileEntity fileEntity, Long userId) {
+    public Mono<FileEntity> downloadFile(FileEntity fileEntity) {
         String keyName = fileEntity.getLocation();
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucketName)
@@ -84,5 +86,17 @@ public class FileService {
                         .save(downloadedFile)
                         .doOnSuccess(f -> log.info("File downloaded - {}", f)));
     }
+
+    public Mono<Void> deleteFile(FileEntity fileEntity) {
+        Mono<Void> deleteFromS3 = Mono.fromFuture(() -> s3AsyncClient.deleteObject(DeleteObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(fileEntity.getFileName())
+                .build())).then();
+        return deleteFromS3.then(
+                fileRepository.deleteById(fileEntity.getId())
+                        .then(Mono.defer(() -> eventService.getEntityById(fileEntity.getId())))
+                        .then());
+    }
+
 
 }

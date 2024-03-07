@@ -52,12 +52,11 @@ public class UserService {
     public Mono<Void> deleteUserById(Long id) {
         return userRepository.deleteById(id);
     }
-
-//    public Flux<UserEntity> getAllActiveUsers() {
-//        return userRepository.file();
-//    }
-//    public Flux<UserEntity> getAllInactiveUsers() {
-//        return userRepository.findAllInactiveUsers();
-//    }
+    public Mono<Void> safeDeleteUserById(Long id) {
+        return userRepository.safeDeleteUser(id);
+    }
+    public Mono<UserEntity> updateUser(UserEntity user) {
+        return userRepository.save(user);
+    }
 
 }

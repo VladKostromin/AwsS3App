@@ -9,5 +9,7 @@ import reactor.core.publisher.Mono;
 public interface UserRepository extends R2dbcRepository<UserEntity, Long> {
     Mono<UserEntity> findByUsername(String username);
 
+    @Query("UPDATE aws.users SET status = 'DELETED' where id = :id")
+    Mono<Void> safeDeleteUser(Long id);
 
 }

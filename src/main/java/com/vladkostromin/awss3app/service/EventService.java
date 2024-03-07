@@ -21,5 +21,9 @@ public class EventService {
         return eventRepository.save(event);
     }
 
+    public Mono<Void> deleteEntity(EventEntity event) {
+        return eventRepository.delete(event);
+    }
+
 
 }
